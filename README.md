@@ -13,6 +13,10 @@ This phrase is meant to capture the full scope of situations in which reading li
 这个短语是为了抓住读写能力在私人到公众，从学校到工作，从正规教育到终身学习和积极的公民身份等方面发挥作用的全部领域。 “实现自己的目标，发展自己的知识和潜力”阐明了阅读素养能够实现个人愿望的观念 - 既有定义的，如毕业或找工作，也有那些不那么明确，
 
 -----
+环境：基本的python执行环境
+另外需要装requests，PyExecJS依赖包
+
+
 
 使用方式：
 ```dos
