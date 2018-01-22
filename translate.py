@@ -4,6 +4,8 @@ import execjs
 import json
 import sys
 import os
+import time
+import math
 from CalcTk import CalcTk
 
 headers = {
@@ -45,6 +47,24 @@ def parse_json(res):
     return json.loads(res)
 
 
+def format_time(time_process, fixed=2):
+    processTime = round(time_process, fixed)
+    day = 24 * 60 * 60
+    hour = 60 * 60
+    min = 60
+    if processTime < 60:
+        return "%.2f s" % processTime
+    elif processTime > day:
+        days = divmod(processTime, day)
+        return "%d d, %s" % (int(days[0]), format_time(days[1]))
+    elif processTime > hour:
+        hours = divmod(processTime, hour)
+        return '%d h, %s' % (int(hours[0]), format_time(hours[1]))
+    else:
+        mins = divmod(processTime, min)
+        return "%d m, %.2f s" % (int(mins[0]), mins[1])
+
+
 def translate(text):
     global params, TK
     url = 'https://translate.google.cn/translate_a/single'
@@ -60,7 +80,7 @@ def translate(text):
 
 
 def main():
-    debug = False
+    debug = True
     source = ''
     target = ''
     lines = []
@@ -70,9 +90,6 @@ def main():
     elif len(sys.argv) == 2:
         source = sys.argv[1]
         p, f = os.path.split(source)
-        target = p + '//T_' + f
-    elif debug:
-        p, f = os.path.split('/Users/huangtianning/Downloads/1.txt')
         target = p + '//T_' + f
     else:
         print('[-]ERROR: \nUsage: python translate.py sourceFile [targetFile]')
@@ -95,17 +112,19 @@ def main():
 
     i = 0
     err_times = 0
-    en_str_list = [] # google翻译段落是返回分句的list，这里整合一下
+    en_str_list = []  # google翻译段落是返回分句的list，这里整合一下
     cn_str_list = []
     count = 1  # 记录当前翻译段数
     chinese = open(target, 'wt', encoding='utf-8')
+    chinese.truncate()
+    time_start = time.time()
     while i < len(lines):
         line = lines[i]
         if not line:
             chinese.write('\n')
             i += 1
             continue
-        print('[+]正在翻译第{}段 ...'.format(count))
+        print('[+]正在翻译第{}段 ...已耗时{}'.format(count, format_time(time.time() - time_start)))
         try:
             ret = translate(line)
             if not ret:
@@ -114,7 +133,7 @@ def main():
                 en_str_list.append(item[1])
                 cn_str_list.append(item[0])
             chinese.write('{}\n{}\n'.format(''.join(en_str_list), ''.join(cn_str_list)))
-            chinese.write('\n')            #每段间隔一行
+            chinese.write('\n')  # 每段间隔一行
             en_str_list.clear()
             cn_str_list.clear()
             i += 1
@@ -123,13 +142,14 @@ def main():
         except Exception as ex:
             print('[-]ERROR: ' + str(ex))
             err_times += 1
-            if(err_times > 10):				#连续十次未获取成功就令URL为None，并跳过
+            if(err_times > 10):  # 连续十次未获取成功就令URL为None，并跳过
                 print('[-]跳过')
                 chinese.write('\n缺\n')
                 i += 1
                 count += 1
     chinese.close()
     print('[+]翻译完成')
+    print('总计耗时{}'.format(format_time(time.time() - time_start)))
 
 
 if __name__ == '__main__':
