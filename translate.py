@@ -79,21 +79,11 @@ def translate(text):
         return None
 
 
-def main():
-    debug = True
-    source = ''
-    target = ''
+def work(source):
     lines = []
-    if len(sys.argv) == 3:
-        source = sys.argv[1]
-        target = sys.argv[2]
-    elif len(sys.argv) == 2:
-        source = sys.argv[1]
-        p, f = os.path.split(source)
-        target = p + '//T_' + f
-    else:
-        print('[-]ERROR: \nUsage: python translate.py sourceFile [targetFile]')
-        return
+    target = ''
+    p, f = os.path.split(source)
+    target = p + '//T_' + f
 
     try:
         english = open(source, 'rt', encoding='utf-8')
@@ -124,7 +114,8 @@ def main():
             chinese.write('\n')
             i += 1
             continue
-        print('[+]正在翻译第{}段 ...已耗时{}'.format(count, format_time(time.time() - time_start)))
+        print('[+]正在翻译第{}段 ...已耗时{}'.format(count,
+                                            format_time(time.time() - time_start)))
         try:
             ret = translate(line)
             if not ret:
@@ -132,7 +123,8 @@ def main():
             for item in ret:
                 en_str_list.append(item[1])
                 cn_str_list.append(item[0])
-            chinese.write('{}\n{}\n'.format(''.join(en_str_list), ''.join(cn_str_list)))
+            chinese.write('{}\n{}\n'.format(
+                ''.join(en_str_list), ''.join(cn_str_list)))
             chinese.write('\n')  # 每段间隔一行
             en_str_list.clear()
             cn_str_list.clear()
@@ -149,8 +141,6 @@ def main():
                 count += 1
     chinese.close()
     print('[+]翻译完成')
+    os.remove(source)
+    print('[+]{}文件已删除'.format(source))
     print('总计耗时{}'.format(format_time(time.time() - time_start)))
-
-
-if __name__ == '__main__':
-    main()
