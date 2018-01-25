@@ -9,6 +9,8 @@ import sys
 import os
 import paragraphFormat
 import translate
+import utils
+import mutiprocess
 
 
 def readPDF(pdfFile):
@@ -28,6 +30,7 @@ def readPDF(pdfFile):
 def main():
     pdf_src = ''
     target = ''
+    deleteTemp = False
     if len(sys.argv) == 3:
         pdf_src = sys.argv[1]
         target = sys.argv[2]
@@ -37,10 +40,16 @@ def main():
         filename, extension = os.path.splitext(f)
         target = p + '//pdf2txt_' + filename + '.txt'
     else:
-        print('[-]ERROR: \nUsage: python pdf2txt.py sourceFile [targetFile]')
-        return
+        pdf_src = input(
+            "请 copy 待翻译的文件的地址(后缀名要带上 like：C://xx/xx/xx.txt  or  X://xx/xx/xx.pdf):")
+        p, f = os.path.split(pdf_src)
+        filename, extension = os.path.splitext(f)
+        target = p + '//pdf2txt_' + filename + '.txt'
+        # print('[-]ERROR: \nUsage: You can only pull one file into...')
+        # return
 
     if extension == '.pdf':
+        deleteTemp = True
         target = p + '//pdf2txt_' + filename + '.txt'
         print('开始 pdf => txt , 请稍等...')
         pdfFile = open(pdf_src, 'rb')
@@ -52,9 +61,20 @@ def main():
     elif extension == '.txt':
         target = pdf_src
     else:
-        print('[-]ERROR: \n sourceFile is  neither pdf  nor  txt')
+        print('[-]ERROR: \n sourceFile is  neither  pdf  nor  txt')
         return
-    translate.work(target)
+
+    # 600行以上启用多线程
+
+    linecount = len(utils.totalLines(target))
+    if linecount == 0:
+        return
+    elif linecount > 600:
+        split_list = utils.split(target, linecount // 4 + 1)
+        mutiprocess.workPool(split_list)
+        utils.delete(split_list)
+    else:
+        translate.work(target, deleteTemp)
 
 
 if __name__ == '__main__':

@@ -5,7 +5,7 @@ import json
 import sys
 import os
 import time
-import math
+import utils
 from CalcTk import CalcTk
 
 headers = {
@@ -47,24 +47,6 @@ def parse_json(res):
     return json.loads(res)
 
 
-def format_time(time_process, fixed=2):
-    processTime = round(time_process, fixed)
-    day = 24 * 60 * 60
-    hour = 60 * 60
-    min = 60
-    if processTime < 60:
-        return "%.2f s" % processTime
-    elif processTime > day:
-        days = divmod(processTime, day)
-        return "%d d, %s" % (int(days[0]), format_time(days[1]))
-    elif processTime > hour:
-        hours = divmod(processTime, hour)
-        return '%d h, %s' % (int(hours[0]), format_time(hours[1]))
-    else:
-        mins = divmod(processTime, min)
-        return "%d m, %.2f s" % (int(mins[0]), mins[1])
-
-
 def translate(text):
     global params, TK
     url = 'https://translate.google.cn/translate_a/single'
@@ -79,26 +61,23 @@ def translate(text):
         return None
 
 
-def work(source):
+def work(source, deleteTemp=False, pid=None, closemutiprocess=True):
     lines = []
     target = ''
     p, f = os.path.split(source)
     target = p + '//T_' + f
 
-    try:
-        english = open(source, 'rt', encoding='utf-8')
-        lines = english.readlines()
-        english.close()
-    except Exception as ex:
-        print('[-]ERROR: ' + str(ex))
+    lines = utils.totalLines(source)
+    total_lines = len(lines)
+    if total_lines == 0:
         return
 
-    total_lines = len(lines)
     for i in range(total_lines):
         lines[i] = lines[i].strip('\n')
         if not lines[i]:
             total_lines -= 1
-    print('[+]共{}段'.format(total_lines))
+    print('[+]共{}段'.format(total_lines)
+          if closemutiprocess else '[+]{} 共{}段'.format(pid, total_lines))
 
     i = 0
     err_times = 0
@@ -114,8 +93,9 @@ def work(source):
             chinese.write('\n')
             i += 1
             continue
-        print('[+]正在翻译第{}段 ...已耗时{}'.format(count,
-                                            format_time(time.time() - time_start)))
+        if closemutiprocess:
+            print('[+]正在翻译第{}段 ...已耗时{}'.format(count,
+                                                utils.format_time(time.time() - time_start)))
         try:
             ret = translate(line)
             if not ret:
@@ -133,6 +113,8 @@ def work(source):
             err_times = 0
         except Exception as ex:
             print('[-]ERROR: ' + str(ex))
+            print('对geoogle翻译请求太过频繁，休息30秒, 30秒之后继续请求')
+            time.sleep(15)
             err_times += 1
             if(err_times > 10):  # 连续十次未获取成功就令URL为None，并跳过
                 print('[-]跳过')
@@ -140,7 +122,9 @@ def work(source):
                 i += 1
                 count += 1
     chinese.close()
-    print('[+]翻译完成')
-    os.remove(source)
-    print('[+]{}文件已删除'.format(source))
-    print('总计耗时{}'.format(format_time(time.time() - time_start)))
+    print('[+]翻译完成' if closemutiprocess else '[+]{} 翻译完成'.format(pid))
+    if deleteTemp:
+        os.remove(source)
+        print('[+]{} 文件已删除'.format(source))
+    print('总计耗时{}'.format(utils.format_time(time.time() - time_start))
+          if closemutiprocess else '[+]{} 总计耗时{}'.format(pid, utils.format_time(time.time() - time_start)))
