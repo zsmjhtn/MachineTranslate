@@ -6,7 +6,8 @@ import sys
 import os
 import time
 import utils
-from CalcTk import CalcTk
+# from CalcTk import CalcTk
+from HandleJs import Py4Js
 
 headers = {
     'Host': 'translate.google.cn',
@@ -29,7 +30,8 @@ params = {
     'tsel': '0', 'kc': '1', 'tk': '376032.257956'
 }
 
-TK = CalcTk()
+js = Py4Js()
+# TK = CalcTk()
 
 
 def get_res(url, data, params):
@@ -48,11 +50,12 @@ def parse_json(res):
 
 
 def translate(text):
-    global params, TK
-    url = 'https://translate.google.cn/translate_a/single'
+    global params, js
+    url = '''http://translate.google.cn/translate_a/single'''
     data = {'q': text}
     try:
-        params['tk'] = TK.get_tk(text)
+        # params['tk'] = TK.get_tk(text)
+        params['tk'] = js.getTk(text)
         res = get_res(url, data, params)
         ret_list = parse_json(res.text)
         return ret_list[0]
@@ -113,8 +116,8 @@ def work(source, deleteTemp=False, pid=None, closemutiprocess=True):
             err_times = 0
         except Exception as ex:
             print('[-]ERROR: ' + str(ex))
-            print('对geoogle翻译请求太过频繁，休息30秒, 30秒之后继续请求')
-            time.sleep(15)
+            print('对geoogle翻译请求太过频繁，休息20秒, 20秒之后继续请求')
+            time.sleep(20)
             err_times += 1
             if(err_times > 10):  # 连续十次未获取成功就令URL为None，并跳过
                 print('[-]跳过')
